@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Motor Pump Credit Report</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--tg-theme-bg-color, #f4f4f9);
+      color: var(--tg-theme-text-color, #222);
+      margin: 0;
+      padding: 16px;
+    }
+    h2 { font-size: 18px; margin-bottom: 14px; }
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 14px;
+      background: var(--tg-theme-secondary-bg-color, #fff);
+      color: var(--tg-theme-text-color, #000);
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--tg-theme-button-color, #2481cc);
+      color: var(--tg-theme-button-text-color, #fff);
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    button:disabled { opacity: 0.6; }
+  </style>
+</head>
+<body>
+  <h2>🚜 Motor Pump Credit Payment</h2>
+  <form id="reportForm">
+    <div class="form-group">
+      <label>Farmer Full Name *</label>
+      <input type="text" id="farmer_name" required placeholder="e.g. Abebe Kebede" />
+    </div>
+    <div class="form-group">
+      <label>Farmer Phone (+251) *</label>
+      <input type="tel" id="farmer_phone" required placeholder="0911..." />
+    </div>
+    <div class="form-group">
+      <label>Motor Pump ID / Serial *</label>
+      <input type="text" id="pump_id" required placeholder="e.g. MP-204" />
+    </div>
+    <div class="form-group">
+      <label>Amount Paid (ETB) *</label>
+      <input type="number" id="amount" step="0.01" required placeholder="e.g. 5000" />
+    </div>
+    <div class="form-group">
+      <label>Bank / Payment Method *</label>
+      <select id="bank_name" required>
+        <option value="CBE">Commercial Bank of Ethiopia (CBE)</option>
+        <option value="Telebirr">Telebirr</option>
+        <option value="Awash Bank">Awash Bank</option>
+        <option value="Bank of Abyssinia">Bank of Abyssinia</option>
+        <option value="Cooperative Bank of Oromia">Cooperative Bank of Oromia (Coop)</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Bank TTN / Transaction Reference *</label>
+      <input type="text" id="ttn" required placeholder="e.g. FT26324XXXXX" />
+    </div>
+    <div class="form-group">
+      <label>Upload Bank Receipt Photo *</label>
+      <input type="file" id="receipt" accept="image/*" required />
+    </div>
+    <button type="submit" id="submitBtn">Submit Credit Report</button>
+  </form>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    document.getElementById("reportForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      btn.innerText = "Submitting...";
+
+      const formData = new FormData();
+      formData.append("initData", tg.initData);
+      formData.append("farmer_name", document.getElementById("farmer_name").value.trim());
+      formData.append("farmer_phone", document.getElementById("farmer_phone").value.trim());
+      formData.append("pump_id", document.getElementById("pump_id").value.trim());
+      formData.append("amount", document.getElementById("amount").value);
+      formData.append("bank_name", document.getElementById("bank_name").value);
+      formData.append("ttn", document.getElementById("ttn").value.trim());
+      formData.append("receipt", document.getElementById("receipt").files[0]);
+
+      try {
+        const res = await fetch("/api/submit", { method: "POST", body: formData });
+        const data = await res.json();
+        if (res.ok) {
+          tg.showAlert("Report saved successfully!", () => tg.close());
+        } else {
+          tg.showAlert("Error: " + (data.detail || "Failed to submit"));
+          btn.disabled = false;
+          btn.innerText = "Submit Credit Report";
+        }
+      } catch (err) {
+        tg.showAlert("Network error. Please check your connection.");
+        btn.disabled = false;
+        btn.innerText = "Submit Credit Report";
+      }
+    });
+  </script>
+</body>
+</html>
